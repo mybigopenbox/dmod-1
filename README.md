@@ -5,28 +5,28 @@ This is a simple Python Flask web application that provides a /healthcheck endpo
 
 ## Directory structure
 
-.
-├── .github/
-│   └── workflows/
-│       └── ci-cd.yml          # GitHub Actions CI/CD pipeline
-├── my_flask_app/
-│   ├── __init__.py             # Initializes the Flask application package
-│   ├── app.py                   # Main application file with Flask setup
-│   ├── requirements.txt         # Python dependencies
-│   └── tests/
-│       ├── __init__.py         # Initializes the tests package
-│       └── test_app.py          # Unit tests for the application
-├── Dockerfile                   # Dockerfile for containerizing the application
-├── helm/
-│   └── my-flask-app/
-│       ├── Chart.yaml          # Helm chart metadata
-│       ├── values.yaml         # Default values for the Helm chart
-│       └── templates/
-│           ├── deployment.yaml  # Kubernetes Deployment template
-│           └── service.yaml     # Kubernetes Service template
-├── README.md                    # Project documentation
-├── technical_notes.md           # Project documentation
-└── .dockerignore                # Docker ignore file
+    .
+    ├── .github/
+    │   └── workflows/
+    │       └── ci-cd.yml          # GitHub Actions CI/CD pipeline
+    ├── my_flask_app/
+    │   ├── __init__.py             # Initializes the Flask application package
+    │   ├── app.py                   # Main application file with Flask setup
+    │   ├── requirements.txt         # Python dependencies
+    │   └── tests/
+    │       ├── __init__.py         # Initializes the tests package
+    │       └── test_app.py          # Unit tests for the application
+    ├── Dockerfile                   # Dockerfile for containerizing the application
+    ├── helm/
+    │   └── my-flask-app/
+    │       ├── Chart.yaml          # Helm chart metadata
+    │       ├── values.yaml         # Default values for the Helm chart
+    │       └── templates/
+    │           ├── deployment.yaml  # Kubernetes Deployment template
+    │           └── service.yaml     # Kubernetes Service template
+    ├── README.md                    # Project documentation
+    ├── technical_notes.md           # Project documentation
+    └── .dockerignore                # Docker ignore file
 
 
 ## Features
