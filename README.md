@@ -4,6 +4,7 @@ This is a simple Python Flask web application that provides a /healthcheck endpo
 
 
 ## Directory structure
+
 .
 ├── .github/
 │   └── workflows/
