@@ -1,0 +1,64 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest
+
+    - name: Run unit tests
+      run: |
+        pytest tests/
+
+    - name: Linting (Code Quality)
+      run: |
+        pip install flake8
+        flake8 app.py
+
+    - name: Set up Docker Compose
+      run: |
+        docker-compose up -d
+        sleep 10
+
+    - name: Run integration tests
+      run: |
+        pytest tests/test_integration.py
+
+    - name: Stop Docker Compose
+      run: docker-compose down
+
+    - name: Deploy to AWS Elastic Beanstalk
+      if: github.ref == 'refs/heads/main'
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+      run: |
+        sudo apt-get install -y unzip
+        curl "https://s3.amazonaws.com/elasticbeanstalk-cli-resources/releases/EBCLI-UNIX.zip" -o "ebcli.zip"
+        unzip ebcli.zip -d ~/.ebcli && rm ebcli.zip
+        export PATH=~/.ebcli:$PATH
+        eb init -p docker ${{ secrets.EB_APP_NAME }} --region ${{ secrets.AWS_REGION }}
+        eb use ${{ secrets.EB_ENV_NAME }}
+        eb deploy

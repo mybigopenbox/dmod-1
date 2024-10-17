@@ -1,0 +1,130 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint-test-build:
+    name: Lint, Test, Build Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          pip install -r my_flask_app/requirements.txt
+          pip install black isort pytest bandit
+
+      # Step 4: Run Black for code formatting
+      - name: Run Black
+        run: black --check my_flask_app/
+
+      # Step 5: Run isort for import sorting
+      - name: Run isort
+        run: isort --check-only my_flask_app/
+
+      # Step 6: Run Bandit for security checks
+      - name: Run Bandit
+        run: bandit -r my_flask_app/
+
+      # Step 7: Run Pytest for unit tests
+      - name: Run Pytest
+        run: pytest my_flask_app/tests/
+
+      # Step 8: Build and push Docker image
+      - name: Build and Push Docker Image
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+        run: |
+          docker build -t $DOCKERHUB_USERNAME/my-flask-app:latest .
+          echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
+          docker push $DOCKERHUB_USERNAME/my-flask-app:latest
+
+  deploy_aws:
+    name: Deploy to AWS Elastic Beanstalk
+    needs: lint-test-build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Deploy to AWS Elastic Beanstalk
+      - name: Deploy to Elastic Beanstalk
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          pip install awsebcli
+          eb init -p docker my-flask-app --region $AWS_REGION
+          eb deploy
+
+  deploy_gcp:
+    name: Deploy to GCP Cloud Run
+    needs: lint-test-build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 9: Authenticate with Google Cloud
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      # Step 10: Set the GCP project
+      - name: Set GCP Project
+        run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+
+      # Step 11: Deploy to Cloud Run
+      - name: Deploy to Google Cloud Run
+        run: |
+          gcloud run deploy my-flask-app \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/my-flask-app:latest \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated
+
+  deploy_k8s:
+    name: Deploy to Kubernetes using Helm
+    needs: lint-test-build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 12: Set up Kubernetes credentials
+      - name: Set up kubeconfig
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
+
+      # Step 13: Install Helm
+      - name: Install Helm
+        run: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+
+      # Step 14: Deploy using Helm
+      - name: Helm Upgrade or Install
+        run: |
+          helm upgrade --install my-flask-app ./my-flask-app \
+            --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/my-flask-app \
+            --set image.tag=latest

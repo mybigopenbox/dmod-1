@@ -1,0 +1,25 @@
+## Local testing to both local and remote k8s instant
+You need to update the values.yaml as appropriate
+This can be deployed to a local version of K8s cluster such as mini-kube. Again, this is outside the scope of these notes
+
+As these instructions stand it will be deployed to the default namespace kube-public. However, this does not stop you deploying to other namespaces
+
+1. package your helm chart
+    helm package my-flask-app
+
+2. Install the Helm chart
+    helm install my-flask-app ./my-flask-app
+
+3. If you make any changes you need to redeploy
+    helm upgrade my-flask-app ./my-flask-app
+
+4. Verify the deployment
+    kubectl get pods
+    kubectl get svc
+    kubectl logs
+
+With time, this would be easy to extend by defining even more variable in 'values.yml'
+
+
+As it is deployed as a service the application can be hit through the service/Load balancer on port 80 or using port redirecton and node port service access
+

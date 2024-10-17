@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  repository: <your-dockerhub-username>/my-flask-app
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: LoadBalancer
+  port: 80
+
+resources: {}
